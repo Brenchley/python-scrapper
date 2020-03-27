@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 
 class ebayScrapper:
-    def __init__(self, url,pages):
+    def __init__(self, url,pages,taxRate,freightCharges,insuranceCharges):
         self.phoneList = []
         self.driver = webdriver.Chrome()
         self.driver.get(url)
@@ -21,12 +21,12 @@ class ebayScrapper:
             sleep(3)
             
             page = self.driver.current_url
-            self.phoneList.append(self.getPhoneList(page))        
+            self.phoneList.append(self.getPhoneList(page,taxRate,freightCharges,insuranceCharges))        
         print (self.phoneList)
 
 
     
-    def getPhoneList(self,url):
+    def getPhoneList(self,url,taxRate,freightCharges,insuranceCharges):
         headers = {"User-Agent": 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36'}
 
         page = requests.get(url, headers = headers)
@@ -42,12 +42,15 @@ class ebayScrapper:
             phoneDetails = phone.find('td',attrs ={'class':'details'})
             title = phoneDetails.find('a',href=True).get_text()
             price = phoneDetails.find('span',attrs={'class':'bin g-b','itemprop':'price'}).get_text()
-            price = float(price[1:].translate({ord(','): None})) * 102
+            price = price[1:].translate({ord(','): None})
+            price = float(price)
+            totalPrice = round(price * (taxRate + 100)/100)
+            totalPrice = (totalPrice * (insuranceCharges + 100 )/100)  + freightCharges
+            totalPrice = float(totalPrice) * 102
 
             _phone['name']= title.encode('utf-8').strip()
-            _phone['price'] = round(price)
+            _phone['price'] = round(totalPrice)
             pagePhoneList.append(_phone)
         return pagePhoneList
 
-
-ebayScrapper('http://www.ebaystores.com/BidAllies-Store/_i.html?_nkw=unlocked%20-tablet',2)
+ebayScrapper('http://www.ebaystores.com/BidAllies-Store/_i.html?_nkw=unlocked%20-tablet',2,8.25,15.0,5)
