@@ -2,6 +2,7 @@ import requests
 from time import sleep
 from bs4 import BeautifulSoup
 from selenium import webdriver
+import pandas as pd
 
 class ebayScrapper:
     def __init__(self, url,pages,taxRate,freightCharges,insuranceCharges):
@@ -22,8 +23,19 @@ class ebayScrapper:
             
             page = self.driver.current_url
             self.phoneList.append(self.getPhoneList(page,taxRate,freightCharges,insuranceCharges))        
-        print (self.phoneList)
+        # print (self.phoneList)
 
+        # store result in csv
+        names = []
+        costs = []
+        for i in range(len(self.phoneList)):
+            for j in range(len(self.phoneList[i])):
+                names.append(self.phoneList[i][j].get('name'))
+                costs.append(self.phoneList[i][j].get('price'))
+
+        df = pd.DataFrame({'Product Name':names,'Price':costs}) 
+        
+        df.to_csv('bidallies.csv', index=False, encoding='utf-8')
 
     
     def getPhoneList(self,url,taxRate,freightCharges,insuranceCharges):
